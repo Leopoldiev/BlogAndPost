@@ -1,6 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
 import { HTTP_STATUSES } from '../../core/types/http-statuses';
 
+const USERNAME = process.env.USERNAME || 'leo';
+const PASSWORD = process.env.PASSWORD || 'qwerty';
+
 export const protectedRouteMiddleware = (
   req: Request,
   res: Response,
@@ -14,10 +17,7 @@ export const protectedRouteMiddleware = (
   }
 
   const authorizationKey =
-    'Basic ' +
-    Buffer.from(`${process.env.USER}:${process.env.PASSWORD}`).toString(
-      'base64',
-    );
+    'Basic ' + Buffer.from(`${USERNAME}:${PASSWORD}`).toString('base64');
 
   if (auth !== authorizationKey) {
     res.sendStatus(HTTP_STATUSES.UNAUTHORIZED_401);
