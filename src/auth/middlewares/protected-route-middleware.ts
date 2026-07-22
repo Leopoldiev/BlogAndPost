@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { HTTP_STATUSES } from '../../core/types/http-statuses';
 
-const USER = process.env.USER || 'leo';
-const PASSWORD = process.env.PASSWORD || 'qwerty';
+const USER = process.env.ADMIN_LOGIN || 'admin';
+const PASSWORD = process.env.ADMIN_PASSWORD || 'qwerty';
 
 export const protectedRouteMiddleware = (
   req: Request,
