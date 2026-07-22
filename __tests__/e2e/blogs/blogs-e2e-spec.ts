@@ -1,13 +1,10 @@
 import { setupApp } from '../../../src/setup-app';
 import request from 'supertest';
 import express from 'express';
-import dotenv from 'dotenv';
 import { BlogInputDto } from '../../../src/blogs/dto/blog-input-dto';
 import { HTTP_STATUSES } from '../../../src/core/types/http-statuses';
 import { BLOGS_PATH } from '../../../src/blogs/constants/blogs-paths';
 import { db } from '../../../src/db/in-memory-db';
-
-dotenv.config({ path: '.env.local' });
 
 describe('Blogs API', () => {
   const app = express();

@@ -1,15 +1,12 @@
 import { setupApp } from '../../../src/setup-app';
 import request from 'supertest';
 import express from 'express';
-import dotenv from 'dotenv';
 import { HTTP_STATUSES } from '../../../src/core/types/http-statuses';
 import { PostInputDto } from '../../../src/posts/dto/post-input-dto';
 import { POSTS_PATH } from '../../../src/posts/constants/posts-paths';
 import { BlogInputDto } from '../../../src/blogs/dto/blog-input-dto';
 import { BLOGS_PATH } from '../../../src/blogs/constants/blogs-paths';
 import { db } from '../../../src/db/in-memory-db';
-
-dotenv.config({ path: '.env.local' });
 
 describe('Posts API', () => {
   const app = express();
