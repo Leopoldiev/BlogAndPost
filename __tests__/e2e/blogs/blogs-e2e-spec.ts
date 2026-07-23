@@ -13,7 +13,7 @@ describe('Blogs API', () => {
   const correctTestBlogData: BlogInputDto = {
     name: 'JavaScript',
     description: 'Computer Science',
-    webSiteUrl: 'https://learnjavascript.ru',
+    websiteUrl: 'https://learnjavascript.ru',
   };
 
   beforeAll(async () => {
@@ -85,7 +85,7 @@ describe('Blogs API', () => {
     await request(app).put(`${BLOGS_PATH}/${blogsResponse.body.id}`).send({
       name: 'React',
       description: 'React for Dummies',
-      webSiteUrl: 'https://learnjavascriptfordummies.ru',
+      websiteUrl: 'https://learnjavascriptfordummies.ru',
     });
 
     expect(db.blogs[1].name).toBe('React');
@@ -101,7 +101,7 @@ describe('Blogs API', () => {
       .send({
         name: 'React',
         description: 'React for Dummies',
-        webSiteUrl: 'https://learnjavascriptfordummies.ru',
+        websiteUrl: 'https://learnjavascriptfordummies.ru',
       })
       .expect(HTTP_STATUSES.NOT_FOUND_404);
   });
@@ -121,7 +121,7 @@ describe('Blogs API', () => {
       .send({
         name: 'Reactdasdadasdasfasfasdfasdf',
         description: 'React for Dummies',
-        webSiteUrl: 'httpsiptfordummies.ru',
+        websiteUrl: 'httpsiptfordummies.ru',
       })
       .expect(HTTP_STATUSES.BAD_REQUEST_400);
   });

@@ -17,7 +17,7 @@ export const blogsRepository = {
       id: lastBlog ? String(Number(lastBlog.id) + 1) : '1',
       name: blog.name,
       description: blog.description,
-      webSiteUrl: blog.webSiteUrl,
+      websiteUrl: blog.websiteUrl,
     };
 
     db.blogs.push(newBlog);
@@ -31,7 +31,7 @@ export const blogsRepository = {
         id: db.blogs[blogIndex].id,
         name: blog.name,
         description: blog.description,
-        webSiteUrl: blog.webSiteUrl,
+        websiteUrl: blog.websiteUrl,
       };
       db.blogs.splice(blogIndex, 1, updatedBlog);
       return true;

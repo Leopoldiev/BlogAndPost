@@ -4,13 +4,13 @@ export const db = {
       id: '1',
       name: 'JavaScript',
       description: 'Computer Science',
-      webSiteUrl: 'https://learnjavascript.ru',
+      websiteUrl: 'https://learnjavascript.ru',
     },
     {
       id: '2',
       name: 'Pancakes',
       description: 'Cooking',
-      webSiteUrl: 'https://cookies.ru',
+      websiteUrl: 'https://cookies.ru',
     },
   ],
   posts: [
