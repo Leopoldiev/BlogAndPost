@@ -14,36 +14,31 @@ export const postsRepository = {
   create(post: PostInputDto) {
     const lastPost = db.posts[db.posts.length - 1];
     const blogIndex = db.blogs.findIndex((blog) => blog.id === post.blogId);
-    console.log(blogIndex);
+
     const newPost: Post = {
       id: lastPost ? String(Number(lastPost.id) + 1) : '1',
-      title: post.title,
-      shortDescription: post.shortDescription,
-      content: post.content,
-      blogId: post.blogId,
+      ...post,
       blogName: db.blogs[blogIndex].name,
     };
 
     db.posts.push(newPost);
-    console.log(db.posts);
     return newPost;
   },
 
   update(id: string, post: PostInputDto) {
     const postIndex = db.posts.findIndex((post) => post.id === id);
-    if (postIndex !== -1) {
+    const blog = db.blogs.find((blog) => blog.id === post.blogId);
+
+    if (blog) {
       const updatedPost: Post = {
-        id: db.posts[postIndex].id,
-        title: post.title,
-        shortDescription: post.shortDescription,
-        content: post.content,
-        blogId: post.blogId,
-        blogName: db.posts[postIndex].blogName,
+        id,
+        ...post,
+        blogName: blog.name,
       };
-      db.posts.splice(postIndex, 1, updatedPost);
-      return true;
+
+      db.posts[postIndex] = updatedPost;
     }
-    return false;
+    return;
   },
 
   delete(id: string) {

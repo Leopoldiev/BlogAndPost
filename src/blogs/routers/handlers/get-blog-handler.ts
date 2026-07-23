@@ -18,5 +18,5 @@ export const getBlogHandler = (
 
   res
     .status(HTTP_STATUSES.NOT_FOUND_404)
-    .send(CreateErrorMessage([{ field: 'id', message: 'Video not found' }]));
+    .send(CreateErrorMessage([{ field: 'id', message: 'Blog not found' }]));
 };

@@ -66,6 +66,7 @@ describe('Blogs API', () => {
   it('Should create correct blog; POST /blogs', async () => {
     const blogsResponse = await request(app)
       .post(`${BLOGS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
     expect(blogsResponse.body.id).toBe('1');
@@ -74,30 +75,36 @@ describe('Blogs API', () => {
   it('Should update correct blog from DB by id; PUT /blogs/{id}', async () => {
     await request(app)
       .post(`${BLOGS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
 
     const blogsResponse = await request(app)
       .post(`${BLOGS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
 
-    await request(app).put(`${BLOGS_PATH}/${blogsResponse.body.id}`).send({
-      name: 'React',
-      description: 'React for Dummies',
-      websiteUrl: 'https://learnjavascriptfordummies.ru',
-    });
-
+    await request(app)
+      .put(`${BLOGS_PATH}/${blogsResponse.body.id}`)
+      .auth('admin', 'qwerty')
+      .send({
+        name: 'React',
+        description: 'React for Dummies',
+        websiteUrl: 'https://learnjavascriptfordummies.ru',
+      });
     expect(db.blogs[1].name).toBe('React');
   });
 
   it('Should not update blog with unexisting id; PUT /blogs/{id}', async () => {
     await request(app)
       .post(`${BLOGS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
     await request(app)
       .put(`${BLOGS_PATH}/${777}`)
+      .auth('admin', 'qwerty')
       .send({
         name: 'React',
         description: 'React for Dummies',
@@ -109,15 +116,18 @@ describe('Blogs API', () => {
   it('Should not update blog with incorrect dataset; PUT /blogs/{id}', async () => {
     await request(app)
       .post(`${BLOGS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
     const blogResponse = await request(app)
       .post(`${BLOGS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
 
     await request(app)
       .put(`${BLOGS_PATH}/${blogResponse.body.id}`)
+      .auth('admin', 'qwerty')
       .send({
         name: 'Reactdasdadasdasfasfasdfasdf',
         description: 'React for Dummies',

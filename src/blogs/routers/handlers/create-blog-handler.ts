@@ -8,6 +8,11 @@ export const createBlogHandler = (
   req: Request<{}, {}, BlogInputDto>,
   res: Response<Blog>,
 ) => {
-  const createBlog = blogsRepository.create(req.body);
-  res.status(HTTP_STATUSES.CREATED_201).send(createBlog);
+  const newBlog: BlogInputDto = {
+    name: req.body.name,
+    description: req.body.description,
+    websiteUrl: req.body.websiteUrl,
+  };
+  const createdBlog = blogsRepository.create(newBlog);
+  res.status(HTTP_STATUSES.CREATED_201).send(createdBlog);
 };

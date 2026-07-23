@@ -86,11 +86,13 @@ describe('Posts API', () => {
   it('Should create correct post; POST /posts', async () => {
     await request(app)
       .post(BLOGS_PATH)
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
 
     const postsResponse = await request(app)
       .post(`${POSTS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestPostData)
       .expect(HTTP_STATUSES.CREATED_201);
     expect(postsResponse.body.id).toBe('1');
@@ -99,25 +101,31 @@ describe('Posts API', () => {
   it('Should update correct post from DB by id; PUT /posts/{id}', async () => {
     await request(app)
       .post(BLOGS_PATH)
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
 
     await request(app)
       .post(`${POSTS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestPostData)
       .expect(HTTP_STATUSES.CREATED_201);
 
     const postsResponse = await request(app)
       .post(`${POSTS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestPostData)
       .expect(HTTP_STATUSES.CREATED_201);
 
-    await request(app).put(`${POSTS_PATH}/${postsResponse.body.id}`).send({
-      title: 'React',
-      shortDescription: 'React samurai way',
-      content: 'The best course...',
-      blogId: '1',
-    });
+    await request(app)
+      .put(`${POSTS_PATH}/${postsResponse.body.id}`)
+      .auth('admin', 'qwerty')
+      .send({
+        title: 'React',
+        shortDescription: 'React samurai way',
+        content: 'The best course...',
+        blogId: '1',
+      });
 
     expect(db.posts[1].title).toBe('React');
   });
@@ -125,10 +133,12 @@ describe('Posts API', () => {
   it('Should not update post with unexisting id; PUT /posts/{id}', async () => {
     await request(app)
       .post(`${POSTS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestPostData)
       .expect(HTTP_STATUSES.CREATED_201);
     await request(app)
       .put(`${POSTS_PATH}/${777}`)
+      .auth('admin', 'qwerty')
       .send({
         title: 'React',
         shortDescription: 'React samurai way',
@@ -141,16 +151,19 @@ describe('Posts API', () => {
   it('Should not update post with incorrect dataset; PUT /posts/{id}', async () => {
     await request(app)
       .post(`${BLOGS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
 
     const postResponse = await request(app)
       .post(`${POSTS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestPostData)
       .expect(HTTP_STATUSES.CREATED_201);
 
     await request(app)
       .put(`${POSTS_PATH}/${postResponse.body.id}`)
+      .auth('admin', 'qwerty')
       .send({
         title: 'Reactfsfsfdsdsfsdfsdfsdfsfdsfdfsdfsdfdsfdsfsdfsdfsdfsffsfsf',
         shortDescription: 'React samurai way',

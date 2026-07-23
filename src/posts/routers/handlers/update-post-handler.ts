@@ -8,10 +8,19 @@ export const updatePostHandler = (
   req: Request<{ id: string }, {}, PostInputDto>,
   res: Response,
 ) => {
-  const isUpdated = postsRepository.update(req.params.id, req.body);
+  const post = postsRepository.findById(req.params.id);
 
-  if (isUpdated) {
+  if (post) {
+    const updatedPost: PostInputDto = {
+      title: req.body.title,
+      shortDescription: req.body.shortDescription,
+      content: req.body.content,
+      blogId: req.body.blogId,
+    };
+
+    postsRepository.update(req.params.id, updatedPost);
     res.sendStatus(HTTP_STATUSES.NO_CONTENT_204);
+    return;
   }
 
   res

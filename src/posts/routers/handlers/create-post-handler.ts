@@ -8,6 +8,13 @@ export const createPostHandler = (
   req: Request<{}, {}, PostInputDto>,
   res: Response<Post>,
 ) => {
-  const createdPost = postsRepository.create(req.body);
+  const newPost: PostInputDto = {
+    title: req.body.title,
+    shortDescription: req.body.shortDescription,
+    content: req.body.content,
+    blogId: req.body.blogId,
+  };
+
+  const createdPost = postsRepository.create(newPost);
   res.status(HTTP_STATUSES.CREATED_201).send(createdPost);
 };
