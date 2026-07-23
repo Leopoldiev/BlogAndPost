@@ -15,7 +15,7 @@ describe('Posts API', () => {
   const correctTestBlogData: BlogInputDto = {
     name: 'JavaScript',
     description: 'Computer Science',
-    webSiteUrl: 'https://learnjavascript.ru',
+    websiteUrl: 'https://learnjavascript.ru',
   };
 
   const correctTestPostData: PostInputDto = {
