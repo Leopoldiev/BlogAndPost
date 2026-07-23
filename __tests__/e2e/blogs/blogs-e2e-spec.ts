@@ -150,7 +150,7 @@ describe('Blogs API', () => {
   it('Testing Authorization', async () => {
     await request(app)
       .post(`${BLOGS_PATH}`)
-      .auth('leo', 'qwerty')
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
 
