@@ -139,10 +139,12 @@ describe('Blogs API', () => {
   it('Should delete blog from DB by id; DELETE /blogs/{id}', async () => {
     const blogResponse = await request(app)
       .post(`${BLOGS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
     await request(app)
       .delete(`${BLOGS_PATH}/${blogResponse.body.id}`)
+      .auth('admin', 'qwerty')
       .expect(HTTP_STATUSES.NO_CONTENT_204);
     expect(db.blogs.length).toBe(0);
   });
@@ -150,10 +152,12 @@ describe('Blogs API', () => {
   it('Should not delete unexisting blog from DB by id; DELETE /blogs/{id}', async () => {
     await request(app)
       .post(`${BLOGS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
     await request(app)
       .delete(`${BLOGS_PATH}/${777}`)
+      .auth('admin', 'qwerty')
       .expect(HTTP_STATUSES.NOT_FOUND_404);
   });
 

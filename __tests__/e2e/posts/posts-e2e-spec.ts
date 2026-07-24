@@ -176,16 +176,19 @@ describe('Posts API', () => {
   it('Should delete post from DB by id; DELETE /posts/{id}', async () => {
     await request(app)
       .post(`${BLOGS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
 
     const postResponse = await request(app)
       .post(`${POSTS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestPostData)
       .expect(HTTP_STATUSES.CREATED_201);
 
     await request(app)
       .delete(`${POSTS_PATH}/${postResponse.body.id}`)
+      .auth('admin', 'qwerty')
       .expect(HTTP_STATUSES.NO_CONTENT_204);
     expect(db.posts.length).toBe(0);
   });
@@ -193,16 +196,19 @@ describe('Posts API', () => {
   it('Should not delete unexisting post from DB by id; DELETE /posts/{id}', async () => {
     await request(app)
       .post(`${BLOGS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestBlogData)
       .expect(HTTP_STATUSES.CREATED_201);
 
     await request(app)
       .post(`${POSTS_PATH}`)
+      .auth('admin', 'qwerty')
       .send(correctTestPostData)
       .expect(HTTP_STATUSES.CREATED_201);
 
     await request(app)
       .delete(`${POSTS_PATH}/${777}`)
+      .auth('admin', 'qwerty')
       .expect(HTTP_STATUSES.NOT_FOUND_404);
   });
 });
