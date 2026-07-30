@@ -8,6 +8,6 @@ export const mapBlogInputDtoToBlog = (
     name: dto.name,
     description: dto.description,
     websiteUrl: dto.websiteUrl,
-    isMembership: true,
+    isMembership: false,
   };
 };
