@@ -3,14 +3,16 @@ import { HTTP_STATUSES } from '../../../core/types/http-statuses';
 import { CreateErrorMessage } from '../../../core/utils/error-utils';
 import { postsRepository } from '../../repositories/posts-repository';
 
-export const deletePostHandler = (
+export const deletePostHandler = async (
   req: Request<{ id: string }>,
   res: Response,
 ) => {
-  const isDeleted = postsRepository.delete(req.params.id);
+  const post = await postsRepository.findById(req.params.id);
 
-  if (isDeleted) {
+  if (post) {
+    await postsRepository.delete(req.params.id);
     res.sendStatus(HTTP_STATUSES.NO_CONTENT_204);
+    return;
   }
 
   res

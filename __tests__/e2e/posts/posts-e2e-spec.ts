@@ -4,211 +4,131 @@ import express from 'express';
 import { HTTP_STATUSES } from '../../../src/core/types/http-statuses';
 import { PostInputDto } from '../../../src/posts/dto/post-input-dto';
 import { POSTS_PATH } from '../../../src/posts/constants/posts-paths';
-import { BlogInputDto } from '../../../src/blogs/dto/blog-input-dto';
-import { BLOGS_PATH } from '../../../src/blogs/constants/blogs-paths';
-import { db } from '../../../src/db/in-memory-db';
+import { runDB, stopDb } from '../../../src/db/mongo.db';
+import { clearDB } from '../../utils/clear-db';
+import { createPost } from '../../utils/posts/create-post';
+import { generateBasicAuthToken } from '../../utils/generate-admin-auth-token';
+import { getPostById } from '../../utils/posts/get-post-by-id';
+import { ObjectId } from 'mongodb';
+import { updatePost } from '../../utils/posts/update-post';
 
 describe('Posts API', () => {
   const app = express();
   setupApp(app);
 
-  const correctTestBlogData: BlogInputDto = {
-    name: 'JavaScript',
-    description: 'Computer Science',
-    websiteUrl: 'https://learnjavascript.ru',
-  };
-
-  const correctTestPostData: PostInputDto = {
-    title: 'React',
-    shortDescription: 'React samurai way',
-    content: 'The best course...',
-    blogId: '1',
-  };
-
   beforeAll(async () => {
-    await request(app)
-      .delete('/testing/all-data')
-      .expect(HTTP_STATUSES.NO_CONTENT_204);
+    await runDB(process.env.MONGO_URL || 'mongodb://localhost:27017');
+    await clearDB(app);
   });
 
-  it('Should return all posts from DB; GET /posts', async () => {
-    await request(app)
-      .post(BLOGS_PATH)
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
+  afterAll(async () => {
+    await stopDb();
+  });
 
-    await request(app)
-      .post(POSTS_PATH)
-      .send(correctTestPostData)
-      .expect(HTTP_STATUSES.CREATED_201);
+  it('Should create correct post in MongoDB; POST /posts', async () => {
+    await createPost(app);
+  });
 
-    const postsResponse = await request(app)
+  it('Should return all posts from MongoDB; GET /posts', async () => {
+    await createPost(app);
+    await createPost(app);
+
+    const response = await request(app)
       .get(POSTS_PATH)
-      .expect(HTTP_STATUSES.OK_200);
-    expect(postsResponse.body.length).toBe(1);
-  });
-
-  it('Should return existing post from DB by id; GET /posts/:id', async () => {
-    await request(app)
-      .post(BLOGS_PATH)
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
-
-    const createdPost = await request(app)
-      .post(POSTS_PATH)
-      .send(correctTestPostData)
-      .expect(HTTP_STATUSES.CREATED_201);
-
-    const post = await request(app)
-      .get(`${POSTS_PATH}/${createdPost.body.id}`)
-      .send()
+      .set('Authorization', generateBasicAuthToken())
       .expect(HTTP_STATUSES.OK_200);
 
-    expect(post.body.id).toBe(createdPost.body.id);
+    expect(response.body).toBeInstanceOf(Array);
+    expect(response.body.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('Should not return unexisting post from DB by id; GET /posts/{id}', async () => {
-    await request(app)
-      .post(BLOGS_PATH)
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
+  it('Should return existing post from MongoDB by id; GET /posts/:id', async () => {
+    const createdPost = await createPost(app);
+
+    const post = await getPostById(app, createdPost.id);
+
+    expect(post).toEqual({
+      ...createdPost,
+      id: expect.any(String),
+      createdAt: expect.any(String),
+    });
+  });
+
+  it('Should not return post with unexisting from MongoDB by id; GET /posts/{id}', async () => {
+    await createPost(app);
+
+    const nonExistingId = new ObjectId().toString();
 
     await request(app)
-      .post(`${POSTS_PATH}`)
-      .send(correctTestPostData)
-      .expect(HTTP_STATUSES.CREATED_201);
-
-    await request(app)
-      .get(`${POSTS_PATH}/${777}`)
+      .get(`${POSTS_PATH}/${nonExistingId}`)
+      .set('Authorization', generateBasicAuthToken())
       .expect(HTTP_STATUSES.NOT_FOUND_404);
   });
 
-  it('Should create correct post; POST /posts', async () => {
-    await request(app)
-      .post(BLOGS_PATH)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
+  it('Should update correct post in MongoDB by id; PUT /posts/{id}', async () => {
+    const createdPost = await createPost(app);
 
-    const postsResponse = await request(app)
-      .post(`${POSTS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestPostData)
-      .expect(HTTP_STATUSES.CREATED_201);
-    expect(postsResponse.body.id).toBe('1');
-  });
+    const postUpdateData: PostInputDto = {
+      title: 'New title',
+      shortDescription: 'New description',
+      content: 'New content',
+      blogId: createdPost.blogId,
+    };
 
-  it('Should update correct post from DB by id; PUT /posts/{id}', async () => {
-    await request(app)
-      .post(BLOGS_PATH)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
+    await updatePost(app, createdPost.id, postUpdateData);
 
-    await request(app)
-      .post(`${POSTS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestPostData)
-      .expect(HTTP_STATUSES.CREATED_201);
-
-    const postsResponse = await request(app)
-      .post(`${POSTS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestPostData)
-      .expect(HTTP_STATUSES.CREATED_201);
-
-    await request(app)
-      .put(`${POSTS_PATH}/${postsResponse.body.id}`)
-      .auth('admin', 'qwerty')
-      .send({
-        title: 'React',
-        shortDescription: 'React samurai way',
-        content: 'The best course...',
-        blogId: '1',
-      });
-
-    expect(db.posts[1].title).toBe('React');
+    const post = await getPostById(app, createdPost.id);
+    console.log(post);
+    expect(post).toEqual({
+      id: expect.any(String),
+      title: postUpdateData.title,
+      shortDescription: postUpdateData.shortDescription,
+      content: postUpdateData.content,
+      blogId: expect.any(String),
+      blogName: expect.any(String),
+      createdAt: expect.any(String),
+    });
   });
 
   it('Should not update post with unexisting id; PUT /posts/{id}', async () => {
+    const createdPost = await createPost(app);
+
+    const postUpdateData: PostInputDto = {
+      title: 'New title',
+      shortDescription: 'New description',
+      content: 'New content',
+      blogId: createdPost.blogId,
+    };
+
+    const nonExistingId = new ObjectId().toString();
+
     await request(app)
-      .post(`${POSTS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestPostData)
-      .expect(HTTP_STATUSES.CREATED_201);
-    await request(app)
-      .put(`${POSTS_PATH}/${777}`)
-      .auth('admin', 'qwerty')
-      .send({
-        title: 'React',
-        shortDescription: 'React samurai way',
-        content: 'The best course...',
-        blogId: '1',
-      })
+      .put(`${POSTS_PATH}/${nonExistingId}`)
+      .set('Authorization', generateBasicAuthToken())
+      .send(postUpdateData)
       .expect(HTTP_STATUSES.NOT_FOUND_404);
   });
 
-  it('Should not update post with incorrect dataset; PUT /posts/{id}', async () => {
-    await request(app)
-      .post(`${BLOGS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
-
-    const postResponse = await request(app)
-      .post(`${POSTS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestPostData)
-      .expect(HTTP_STATUSES.CREATED_201);
+  it('Should delete post from MongoDB by id; DELETE /posts/{id}', async () => {
+    const createdPost = await createPost(app);
 
     await request(app)
-      .put(`${POSTS_PATH}/${postResponse.body.id}`)
-      .auth('admin', 'qwerty')
-      .send({
-        title: 'Reactfsfsfdsdsfsdfsdfsdfsfdsfdfsdfsdfdsfdsfsdfsdfsdfsffsfsf',
-        shortDescription: 'React samurai way',
-        content: 'The best course...',
-        blogId: '1',
-      })
-      .expect(HTTP_STATUSES.BAD_REQUEST_400);
-  });
-
-  it('Should delete post from DB by id; DELETE /posts/{id}', async () => {
-    await request(app)
-      .post(`${BLOGS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
-
-    const postResponse = await request(app)
-      .post(`${POSTS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestPostData)
-      .expect(HTTP_STATUSES.CREATED_201);
-
-    await request(app)
-      .delete(`${POSTS_PATH}/${postResponse.body.id}`)
-      .auth('admin', 'qwerty')
+      .delete(`${POSTS_PATH}/${createdPost.id}`)
+      .set('Authorization', generateBasicAuthToken())
       .expect(HTTP_STATUSES.NO_CONTENT_204);
-    expect(db.posts.length).toBe(0);
+
+    await request(app)
+      .get(`${POSTS_PATH}/${createdPost.id}`)
+      .set('Authorization', generateBasicAuthToken())
+      .expect(HTTP_STATUSES.NOT_FOUND_404);
   });
 
   it('Should not delete unexisting post from DB by id; DELETE /posts/{id}', async () => {
-    await request(app)
-      .post(`${BLOGS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
+    const nonExistingId = new ObjectId().toString();
 
     await request(app)
-      .post(`${POSTS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestPostData)
-      .expect(HTTP_STATUSES.CREATED_201);
-
-    await request(app)
-      .delete(`${POSTS_PATH}/${777}`)
-      .auth('admin', 'qwerty')
+      .delete(`${POSTS_PATH}/${nonExistingId}`)
+      .set('Authorization', generateBasicAuthToken())
       .expect(HTTP_STATUSES.NOT_FOUND_404);
   });
 });

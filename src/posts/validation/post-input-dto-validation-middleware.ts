@@ -24,7 +24,9 @@ const contentValidation = body('content')
 const blogIdValidation = body('blogId')
   .isString()
   .withMessage('BlogId must be a string')
-  .trim();
+  .trim()
+  .isLength({ min: 1 })
+  .withMessage('Length of content is incorrect');
 
 export const postInputDtoValidation = [
   titleValidation,

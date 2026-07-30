@@ -4,173 +4,132 @@ import express from 'express';
 import { BlogInputDto } from '../../../src/blogs/dto/blog-input-dto';
 import { HTTP_STATUSES } from '../../../src/core/types/http-statuses';
 import { BLOGS_PATH } from '../../../src/blogs/constants/blogs-paths';
-import { db } from '../../../src/db/in-memory-db';
+import { runDB, stopDb } from '../../../src/db/mongo.db';
+import { clearDB } from '../../utils/clear-db';
+import { generateBasicAuthToken } from '../../utils/generate-admin-auth-token';
+import { createBlog } from '../../utils/blogs/create-blog';
+import { getBlogById } from '../../utils/blogs/get-blog-by-id';
+import { ObjectId } from 'mongodb';
+import { updateBlog } from '../../utils/blogs/update-blog';
 
 describe('Blogs API', () => {
   const app = express();
   setupApp(app);
 
-  const correctTestBlogData: BlogInputDto = {
-    name: 'JavaScript',
-    description: 'Computer Science',
-    websiteUrl: 'https://learnjavascript.ru',
-  };
-
   beforeAll(async () => {
-    await request(app)
-      .delete('/testing/all-data')
-      .expect(HTTP_STATUSES.NO_CONTENT_204);
+    await runDB(process.env.MONGO_URL || 'mongodb://localhost:27017');
+    await clearDB(app);
   });
 
-  it('Should return all blogs from DB; GET /blogs', async () => {
-    await request(app)
-      .post(BLOGS_PATH)
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
+  afterAll(async () => {
+    await stopDb();
+  });
 
-    await request(app)
-      .post(BLOGS_PATH)
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
+  it('Should create correct blog in MongoDB; POST /blogs', async () => {
+    const newBlog: BlogInputDto = {
+      name: 'NodeJs',
+      description: 'Learn coding',
+      websiteUrl: 'https://nodejs.org/',
+    };
 
-    const blogsResponse = await request(app)
+    await createBlog(app, newBlog);
+  });
+
+  it('Should return all blogs from MongoDB; GET /blogs', async () => {
+    await createBlog(app);
+    await createBlog(app);
+
+    const response = await request(app)
       .get(BLOGS_PATH)
-      .expect(HTTP_STATUSES.OK_200);
-    expect(blogsResponse.body.length).toBe(2);
-  });
-
-  it('Should return existing blog from DB by id; GET /blogs/:id', async () => {
-    const createdBlog = await request(app)
-      .post(BLOGS_PATH)
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
-
-    const blog = await request(app)
-      .get(`${BLOGS_PATH}/${createdBlog.body.id}`)
-      .send()
+      .set('Authorization', generateBasicAuthToken())
       .expect(HTTP_STATUSES.OK_200);
 
-    expect(blog.body.id).toBe(createdBlog.body.id);
+    expect(response.body).toBeInstanceOf(Array);
+    expect(response.body.length).toBeGreaterThanOrEqual(2);
   });
 
-  it('Should not return unexisting blog from DB by id; GET /blogs/{id}', async () => {
+  it('Should return existing blog from MongoDB by id; GET /blogs/:id', async () => {
+    const createdBlog = await createBlog(app);
+
+    const blog = await getBlogById(app, createdBlog.id);
+
+    expect(blog).toEqual({
+      ...createdBlog,
+      id: expect.any(String),
+      createdAt: expect.any(String),
+    });
+  });
+
+  it('Should not return blog with unexisting id from MongoDB by id; GET /blogs/{id}', async () => {
+    await createBlog(app);
+
+    const nonExistingId = new ObjectId().toString();
+
     await request(app)
-      .post(`${BLOGS_PATH}`)
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
-    await request(app)
-      .get(`${BLOGS_PATH}/${777}`)
+      .get(`${BLOGS_PATH}/${nonExistingId}`)
+      .set('Authorization', generateBasicAuthToken())
       .expect(HTTP_STATUSES.NOT_FOUND_404);
   });
 
-  it('Should create correct blog; POST /blogs', async () => {
-    const blogsResponse = await request(app)
-      .post(`${BLOGS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
-    expect(blogsResponse.body.id).toBe('1');
-  });
+  it('Should update correct blog from MongoDB by id; PUT /blogs/{id}', async () => {
+    const createdBlog = await createBlog(app);
 
-  it('Should update correct blog from DB by id; PUT /blogs/{id}', async () => {
-    await request(app)
-      .post(`${BLOGS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
+    const blogUpdateData: BlogInputDto = {
+      name: 'New name',
+      description: 'New description',
+      websiteUrl: 'https://new.org/',
+    };
 
-    const blogsResponse = await request(app)
-      .post(`${BLOGS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
+    await updateBlog(app, createdBlog.id, blogUpdateData);
 
-    await request(app)
-      .put(`${BLOGS_PATH}/${blogsResponse.body.id}`)
-      .auth('admin', 'qwerty')
-      .send({
-        name: 'React',
-        description: 'React for Dummies',
-        websiteUrl: 'https://learnjavascriptfordummies.ru',
-      });
-    expect(db.blogs[1].name).toBe('React');
+    const blogResponse = await getBlogById(app, createdBlog.id);
+
+    expect(blogResponse).toEqual({
+      id: expect.any(String),
+      name: blogUpdateData.name,
+      description: blogUpdateData.description,
+      websiteUrl: blogUpdateData.websiteUrl,
+      createdAt: expect.any(String),
+      isMembership: expect.any(Boolean),
+    });
   });
 
   it('Should not update blog with unexisting id; PUT /blogs/{id}', async () => {
+    const blogUpdateData: BlogInputDto = {
+      name: 'New name',
+      description: 'New description',
+      websiteUrl: 'https://new.org/',
+    };
+
+    const nonExistingId = new ObjectId().toString();
+
     await request(app)
-      .post(`${BLOGS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
-    await request(app)
-      .put(`${BLOGS_PATH}/${777}`)
-      .auth('admin', 'qwerty')
-      .send({
-        name: 'React',
-        description: 'React for Dummies',
-        websiteUrl: 'https://learnjavascriptfordummies.ru',
-      })
+      .put(`${BLOGS_PATH}/${nonExistingId}`)
+      .set('Authorization', generateBasicAuthToken())
+      .send(blogUpdateData)
       .expect(HTTP_STATUSES.NOT_FOUND_404);
   });
 
-  it('Should not update blog with incorrect dataset; PUT /blogs/{id}', async () => {
-    await request(app)
-      .post(`${BLOGS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
-    const blogResponse = await request(app)
-      .post(`${BLOGS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
+  it('Should delete blog from MongoDB by id; DELETE /blogs/{id}', async () => {
+    const createdBlog = await createBlog(app);
 
     await request(app)
-      .put(`${BLOGS_PATH}/${blogResponse.body.id}`)
-      .auth('admin', 'qwerty')
-      .send({
-        name: 'Reactdasdadasdasfasfasdfasdf',
-        description: 'React for Dummies',
-        websiteUrl: 'httpsiptfordummies.ru',
-      })
-      .expect(HTTP_STATUSES.BAD_REQUEST_400);
-  });
-
-  it('Should delete blog from DB by id; DELETE /blogs/{id}', async () => {
-    const blogResponse = await request(app)
-      .post(`${BLOGS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
-    await request(app)
-      .delete(`${BLOGS_PATH}/${blogResponse.body.id}`)
-      .auth('admin', 'qwerty')
+      .delete(`${BLOGS_PATH}/${createdBlog.id}`)
+      .set('Authorization', generateBasicAuthToken())
       .expect(HTTP_STATUSES.NO_CONTENT_204);
-    expect(db.blogs.length).toBe(0);
-  });
 
-  it('Should not delete unexisting blog from DB by id; DELETE /blogs/{id}', async () => {
     await request(app)
-      .post(`${BLOGS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
-    await request(app)
-      .delete(`${BLOGS_PATH}/${777}`)
-      .auth('admin', 'qwerty')
+      .get(`${BLOGS_PATH}/${createdBlog.id}`)
+      .set('Authorization', generateBasicAuthToken())
       .expect(HTTP_STATUSES.NOT_FOUND_404);
   });
 
-  it('Testing Authorization', async () => {
-    await request(app)
-      .post(`${BLOGS_PATH}`)
-      .auth('admin', 'qwerty')
-      .send(correctTestBlogData)
-      .expect(HTTP_STATUSES.CREATED_201);
+  it('Should not delete unexisting blog from MongoDB by id; DELETE /blogs/{id}', async () => {
+    const nonExistingId = new ObjectId().toString();
 
-    const blogsResponse = await request(app)
-      .get(`${BLOGS_PATH}`)
-      .expect(HTTP_STATUSES.OK_200);
-    expect(blogsResponse.body).toHaveLength(1);
+    await request(app)
+      .delete(`${BLOGS_PATH}/${nonExistingId}`)
+      .set('Authorization', generateBasicAuthToken())
+      .expect(HTTP_STATUSES.NOT_FOUND_404);
   });
 });

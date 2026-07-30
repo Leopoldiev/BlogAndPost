@@ -1,20 +1,33 @@
 import { Request, Response } from 'express';
 import { HTTP_STATUSES } from '../../../core/types/http-statuses';
 import { PostInputDto } from '../../dto/post-input-dto';
-import { Post } from '../../types/post';
+import { PostDBModel, PostViewModel } from '../../types/postViewModel';
 import { postsRepository } from '../../repositories/posts-repository';
+import { mapPostInputDtoToPostDbModel } from '../mappers/map-post-input-dto-to-post-db-model';
+import { blogsRepository } from '../../../blogs/repositories/blogs-repository';
+import { mapToPostViewModel } from '../mappers/map-to-post-view-model';
 
-export const createPostHandler = (
+export const createPostHandler = async (
   req: Request<{}, {}, PostInputDto>,
-  res: Response<Post>,
+  res: Response<PostViewModel>,
 ) => {
-  const newPost: PostInputDto = {
-    title: req.body.title,
-    shortDescription: req.body.shortDescription,
-    content: req.body.content,
-    blogId: req.body.blogId,
-  };
+  const createdDate = new Date();
+  const blog = await blogsRepository.findById(req.body.blogId);
 
-  const createdPost = postsRepository.create(newPost);
-  res.status(HTTP_STATUSES.CREATED_201).send(createdPost);
+  if (blog) {
+    const newPost: PostDBModel = {
+      ...mapPostInputDtoToPostDbModel(req.body),
+      blogName: blog.name,
+      createdAt: createdDate.toISOString(),
+    };
+
+    const createdPost = await postsRepository.create(newPost);
+
+    if (!createdPost) {
+      throw new Error('Inserted post was not found');
+    }
+
+    const postViewModel = mapToPostViewModel(createdPost);
+    res.status(HTTP_STATUSES.CREATED_201).send(postViewModel);
+  }
 };

@@ -24,7 +24,6 @@ postsRouter.get(
 postsRouter.post(
   POSTS_ROUTES.ROOT,
   protectedRouteMiddleware,
-  protectedRouteMiddleware,
   postInputDtoValidation,
   validationResultMiddleware,
   createPostHandler,

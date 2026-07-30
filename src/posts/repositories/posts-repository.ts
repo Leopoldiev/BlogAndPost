@@ -1,52 +1,35 @@
-import { db } from '../../db/in-memory-db';
-import { Post } from '../types/post';
+import { PostDBModel } from '../types/postViewModel';
 import { PostInputDto } from '../dto/post-input-dto';
+import { ObjectId, WithId } from 'mongodb';
+import { postCollection } from '../../db/collections';
 
 export const postsRepository = {
-  findAll() {
-    return db.posts;
+  async findAll(): Promise<WithId<PostDBModel>[]> {
+    return postCollection.find({}).toArray();
   },
 
-  findById(id: string): Post | null {
-    return db.posts.find((post) => post.id === id) ?? null;
+  async findById(id: string): Promise<WithId<PostDBModel> | null> {
+    return await postCollection.findOne({ _id: new ObjectId(id) });
   },
 
-  create(post: PostInputDto) {
-    const lastPost = db.posts[db.posts.length - 1];
-    const blogIndex = db.blogs.findIndex((blog) => blog.id === post.blogId);
-
-    const newPost: Post = {
-      id: lastPost ? String(Number(lastPost.id) + 1) : '1',
-      ...post,
-      blogName: db.blogs[blogIndex].name,
-    };
-
-    db.posts.push(newPost);
-    return newPost;
+  async create(post: PostDBModel) {
+    const insertResult = await postCollection.insertOne(post);
+    return await postCollection.findOne({ _id: insertResult.insertedId });
   },
 
-  update(id: string, post: PostInputDto) {
-    const postIndex = db.posts.findIndex((post) => post.id === id);
-    const blog = db.blogs.find((blog) => blog.id === post.blogId);
-
-    if (blog) {
-      const updatedPost: Post = {
-        id,
-        ...post,
-        blogName: blog.name,
-      };
-
-      db.posts[postIndex] = updatedPost;
-    }
-    return;
+  async update(id: string, post: PostInputDto): Promise<boolean> {
+    const updateResult = await postCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: post },
+    );
+    return updateResult.matchedCount > 0;
   },
 
-  delete(id: string) {
-    const postIndex = db.posts.findIndex((post) => post.id === id);
-    if (postIndex !== -1) {
-      db.posts.splice(postIndex, 1);
-      return true;
-    }
-    return false;
+  async delete(id: string) {
+    const deleteResult = await postCollection.deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    return deleteResult.deletedCount > 0;
   },
 };

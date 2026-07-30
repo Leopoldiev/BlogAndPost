@@ -3,14 +3,16 @@ import { HTTP_STATUSES } from '../../../core/types/http-statuses';
 import { CreateErrorMessage } from '../../../core/utils/error-utils';
 import { PostInputDto } from '../../dto/post-input-dto';
 import { postsRepository } from '../../repositories/posts-repository';
+import { blogsRepository } from '../../../blogs/repositories/blogs-repository';
 
-export const updatePostHandler = (
+export const updatePostHandler = async (
   req: Request<{ id: string }, {}, PostInputDto>,
   res: Response,
 ) => {
-  const post = postsRepository.findById(req.params.id);
+  const post = await postsRepository.findById(req.params.id);
+  const blog = await blogsRepository.findById(req.body.blogId);
 
-  if (post) {
+  if (post && blog) {
     const updatedPost: PostInputDto = {
       title: req.body.title,
       shortDescription: req.body.shortDescription,
@@ -18,7 +20,7 @@ export const updatePostHandler = (
       blogId: req.body.blogId,
     };
 
-    postsRepository.update(req.params.id, updatedPost);
+    await postsRepository.update(req.params.id, updatedPost);
     res.sendStatus(HTTP_STATUSES.NO_CONTENT_204);
     return;
   }

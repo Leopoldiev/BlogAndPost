@@ -2,17 +2,19 @@ import { Request, Response } from 'express';
 import { FieldError } from '../../../core/types/field-error';
 import { HTTP_STATUSES } from '../../../core/types/http-statuses';
 import { CreateErrorMessage } from '../../../core/utils/error-utils';
-import { Post } from '../../types/post';
+import { PostViewModel } from '../../types/postViewModel';
 import { postsRepository } from '../../repositories/posts-repository';
+import { mapToPostViewModel } from '../mappers/map-to-post-view-model';
 
-export const getPostHandler = (
+export const getPostHandler = async (
   req: Request<{ id: string }>,
-  res: Response<Post | { errorsMessages: FieldError[] | null }>,
+  res: Response<PostViewModel | { errorsMessages: FieldError[] | null }>,
 ) => {
-  const post = postsRepository.findById(req.params.id);
+  const post = await postsRepository.findById(req.params.id);
 
   if (post) {
-    res.status(HTTP_STATUSES.OK_200).send(post);
+    const postViewModel = mapToPostViewModel(post);
+    res.status(HTTP_STATUSES.OK_200).send(postViewModel);
     return;
   }
 
