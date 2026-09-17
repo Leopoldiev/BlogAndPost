@@ -11,6 +11,9 @@ import { getPostById } from '../../utils/posts/get-post-by-id';
 import { ObjectId } from 'mongodb';
 import { updatePost } from '../../utils/posts/update-post';
 import { PostCreateUpdateDto } from '../../../src/posts/application/dtos/post-create-update.dto';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 describe('Posts API', () => {
   const app = express();

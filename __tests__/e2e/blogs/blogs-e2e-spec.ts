@@ -14,6 +14,9 @@ import { BlogCreateUpdateDto } from '../../../src/blogs/application/dtos/blog-cr
 import { createPost } from '../../utils/posts/create-post';
 import { PostCreateUpdateDto } from '../../../src/posts/application/dtos/post-create-update.dto';
 import { getPostInputDto } from '../../utils/posts/get-post-input-dto';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 describe('Blogs API', () => {
   const app = express();
