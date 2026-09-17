@@ -1,17 +1,17 @@
 import { Express } from 'express';
-import { BlogInputDto } from '../../../src/blogs/dto/blog-input-dto';
 import { getBlogInputDto } from './get-blog-input-dto';
 import { BLOGS_PATH } from '../../../src/blogs/constants/blogs-paths';
 import { generateBasicAuthToken } from '../generate-admin-auth-token';
 import { HTTP_STATUSES } from '../../../src/core/types/http-statuses';
 import request from 'supertest';
+import { BlogCreateUpdateDto } from '../../../src/blogs/application/dtos/blog-create-update.dto';
 
 export const updateBlog = async (
   app: Express,
   blogId: string,
-  blogUpdateDto?: BlogInputDto,
+  blogUpdateDto?: BlogCreateUpdateDto,
 ): Promise<void> => {
-  const defaultBlogData: BlogInputDto = getBlogInputDto();
+  const defaultBlogData: BlogCreateUpdateDto = getBlogInputDto();
 
   const testBlogData = { ...defaultBlogData, ...blogUpdateDto };
 

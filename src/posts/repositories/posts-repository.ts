@@ -1,28 +1,34 @@
-import { PostDBModel } from '../types/postViewModel';
-import { PostInputDto } from '../dto/post-input-dto';
 import { ObjectId, WithId } from 'mongodb';
 import { postCollection } from '../../db/collections';
+import { Post } from '../domain/post';
+import { PostCreateUpdateDto } from '../application/dtos/post-create-update.dto';
+import { NotFoundException } from '../../core/exceptions/not-found.exception';
+import { PostViewModel } from '../types/postViewModel';
 
 export const postsRepository = {
-  async findAll(): Promise<WithId<PostDBModel>[]> {
-    return postCollection.find({}).toArray();
-  },
-
-  async findById(id: string): Promise<WithId<PostDBModel> | null> {
-    return await postCollection.findOne({ _id: new ObjectId(id) });
-  },
-
-  async create(post: PostDBModel) {
+  async create(post: Post): Promise<string> {
     const insertResult = await postCollection.insertOne(post);
-    return await postCollection.findOne({ _id: insertResult.insertedId });
+    return insertResult.insertedId.toString();
   },
 
-  async update(id: string, post: PostInputDto): Promise<boolean> {
+  async update(id: string, dto: PostCreateUpdateDto): Promise<void> {
     const updateResult = await postCollection.updateOne(
       { _id: new ObjectId(id) },
-      { $set: post },
+      {
+        $set: {
+          title: dto.title,
+          shortDescription: dto.shortDescription,
+          content: dto.content,
+          blogId: dto.blogId,
+        },
+      },
     );
-    return updateResult.matchedCount > 0;
+
+    if (updateResult.matchedCount < 1) {
+      throw new NotFoundException('Post not exist');
+    }
+
+    return;
   },
 
   async delete(id: string) {
@@ -30,6 +36,30 @@ export const postsRepository = {
       _id: new ObjectId(id),
     });
 
-    return deleteResult.deletedCount > 0;
+    if (deleteResult.deletedCount < 1) {
+      throw new NotFoundException('Post not exist');
+    }
+    return;
+  },
+
+  async findByIdOrFail(id: string): Promise<WithId<Post>> {
+    const post = await postCollection.findOne({ _id: new ObjectId(id) });
+
+    if (!post) {
+      throw new NotFoundException(`Post with id ${id} not found`);
+    }
+    return post;
+  },
+
+  mapToPostViewModel(post: WithId<Post>): PostViewModel {
+    return {
+      id: post._id.toString(),
+      title: post.title,
+      shortDescription: post.shortDescription,
+      content: post.content,
+      blogId: post.blogId,
+      blogName: post.blogName,
+      createdAt: post.createdAt,
+    };
   },
 };

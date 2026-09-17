@@ -1,35 +1,51 @@
-import { BlogDBModel } from '../types/blogViewModel';
 import { blogCollection } from '../../db/collections';
 import { ObjectId, WithId } from 'mongodb';
-import { BlogInputDto } from '../dto/blog-input-dto';
+import { BlogCreateUpdateDto } from '../application/dtos/blog-create-update.dto';
+import { Blog } from '../domain/blog';
+import { NotFoundException } from '../../core/exceptions/not-found.exception';
 
 export const blogsRepository = {
-  async findAll(): Promise<WithId<BlogDBModel>[]> {
-    return await blogCollection.find({}).toArray();
+  async create(newBlog: Blog): Promise<string> {
+    const insertResult = await blogCollection.insertOne(newBlog);
+    return insertResult.insertedId.toString();
   },
 
-  async findById(id: string): Promise<WithId<BlogDBModel> | null> {
-    return await blogCollection.findOne({ _id: new ObjectId(id) });
-  },
-
-  async create(blog: BlogDBModel) {
-    const insertResult = await blogCollection.insertOne(blog);
-    return await blogCollection.findOne({ _id: insertResult.insertedId });
-  },
-
-  async update(id: string, blog: BlogInputDto): Promise<boolean> {
+  async update(id: string, dto: BlogCreateUpdateDto): Promise<void> {
     const updateResult = await blogCollection.updateOne(
       { _id: new ObjectId(id) },
-      { $set: blog },
+      {
+        $set: {
+          name: dto.name,
+          description: dto.description,
+          websiteUrl: dto.websiteUrl,
+        },
+      },
     );
-    return updateResult.matchedCount > 0;
+
+    if (updateResult.matchedCount < 1) {
+      throw new NotFoundException('Blog not exist');
+    }
+
+    return;
   },
 
-  async delete(id: string): Promise<boolean> {
+  async delete(id: string): Promise<void> {
     const deleteResult = await blogCollection.deleteOne({
       _id: new ObjectId(id),
     });
 
-    return deleteResult.deletedCount > 0;
+    if (deleteResult.deletedCount < 1) {
+      throw new NotFoundException('Blog not exist');
+    }
+    return;
+  },
+
+  async findByIdOrFail(id: string): Promise<WithId<Blog>> {
+    const blog = await blogCollection.findOne({ _id: new ObjectId(id) });
+
+    if (!blog) {
+      throw new NotFoundException(`Blog with id ${id} not found`);
+    }
+    return blog;
   },
 };

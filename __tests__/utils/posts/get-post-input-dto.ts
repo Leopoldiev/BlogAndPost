@@ -1,6 +1,6 @@
-import { PostInputDto } from '../../../src/posts/dto/post-input-dto';
+import { PostCreateUpdateDto } from '../../../src/posts/application/dtos/post-create-update.dto';
 
-export function getPostInputDto(blogId: string): PostInputDto {
+export function getPostInputDto(blogId: string): PostCreateUpdateDto {
   return {
     title: 'NodeJS',
     shortDescription: 'Express, MongoDB',

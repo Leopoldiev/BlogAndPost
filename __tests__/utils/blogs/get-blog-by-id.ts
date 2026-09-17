@@ -1,5 +1,5 @@
 import { Express } from 'express';
-import { BlogViewModel } from '../../../src/blogs/types/blogViewModel';
+import { BlogViewModel } from '../../../src/blogs/routes/output/blog.view-model';
 import request from 'supertest';
 import { BLOGS_PATH } from '../../../src/blogs/constants/blogs-paths';
 import { generateBasicAuthToken } from '../generate-admin-auth-token';

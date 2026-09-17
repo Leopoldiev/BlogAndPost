@@ -1,5 +1,4 @@
-export type PostViewModel = {
-  id: string;
+export type Post = {
   title: string;
   shortDescription: string;
   content: string;
@@ -7,5 +6,3 @@ export type PostViewModel = {
   blogName: string;
   createdAt: string;
 };
-
-

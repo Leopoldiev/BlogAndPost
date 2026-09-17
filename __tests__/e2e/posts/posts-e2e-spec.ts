@@ -2,7 +2,6 @@ import { setupApp } from '../../../src/setup-app';
 import request from 'supertest';
 import express from 'express';
 import { HTTP_STATUSES } from '../../../src/core/types/http-statuses';
-import { PostInputDto } from '../../../src/posts/dto/post-input-dto';
 import { POSTS_PATH } from '../../../src/posts/constants/posts-paths';
 import { runDB, stopDb } from '../../../src/db/mongo.db';
 import { clearDB } from '../../utils/clear-db';
@@ -11,6 +10,7 @@ import { generateBasicAuthToken } from '../../utils/generate-admin-auth-token';
 import { getPostById } from '../../utils/posts/get-post-by-id';
 import { ObjectId } from 'mongodb';
 import { updatePost } from '../../utils/posts/update-post';
+import { PostCreateUpdateDto } from '../../../src/posts/application/dtos/post-create-update.dto';
 
 describe('Posts API', () => {
   const app = express();
@@ -38,8 +38,8 @@ describe('Posts API', () => {
       .set('Authorization', generateBasicAuthToken())
       .expect(HTTP_STATUSES.OK_200);
 
-    expect(response.body).toBeInstanceOf(Array);
-    expect(response.body.length).toBeGreaterThanOrEqual(2);
+    expect(response.body).toBeInstanceOf(Object);
+    expect(response.body.items.length).toBeGreaterThanOrEqual(2);
   });
 
   it('Should return existing post from MongoDB by id; GET /posts/:id', async () => {
@@ -68,7 +68,7 @@ describe('Posts API', () => {
   it('Should update correct post in MongoDB by id; PUT /posts/{id}', async () => {
     const createdPost = await createPost(app);
 
-    const postUpdateData: PostInputDto = {
+    const postUpdateData: PostCreateUpdateDto = {
       title: 'New title',
       shortDescription: 'New description',
       content: 'New content',
@@ -93,7 +93,7 @@ describe('Posts API', () => {
   it('Should not update post with unexisting id; PUT /posts/{id}', async () => {
     const createdPost = await createPost(app);
 
-    const postUpdateData: PostInputDto = {
+    const postUpdateData: PostCreateUpdateDto = {
       title: 'New title',
       shortDescription: 'New description',
       content: 'New content',

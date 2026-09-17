@@ -1,7 +1,6 @@
 import { setupApp } from '../../../src/setup-app';
 import request from 'supertest';
 import express from 'express';
-import { BlogInputDto } from '../../../src/blogs/dto/blog-input-dto';
 import { HTTP_STATUSES } from '../../../src/core/types/http-statuses';
 import { BLOGS_PATH } from '../../../src/blogs/constants/blogs-paths';
 import { runDB, stopDb } from '../../../src/db/mongo.db';
@@ -11,6 +10,10 @@ import { createBlog } from '../../utils/blogs/create-blog';
 import { getBlogById } from '../../utils/blogs/get-blog-by-id';
 import { ObjectId } from 'mongodb';
 import { updateBlog } from '../../utils/blogs/update-blog';
+import { BlogCreateUpdateDto } from '../../../src/blogs/application/dtos/blog-create-update.dto';
+import { createPost } from '../../utils/posts/create-post';
+import { PostCreateUpdateDto } from '../../../src/posts/application/dtos/post-create-update.dto';
+import { getPostInputDto } from '../../utils/posts/get-post-input-dto';
 
 describe('Blogs API', () => {
   const app = express();
@@ -26,7 +29,7 @@ describe('Blogs API', () => {
   });
 
   it('Should create correct blog in MongoDB; POST /blogs', async () => {
-    const newBlog: BlogInputDto = {
+    const newBlog: BlogCreateUpdateDto = {
       name: 'NodeJs',
       description: 'Learn coding',
       websiteUrl: 'https://nodejs.org/',
@@ -44,8 +47,8 @@ describe('Blogs API', () => {
       .set('Authorization', generateBasicAuthToken())
       .expect(HTTP_STATUSES.OK_200);
 
-    expect(response.body).toBeInstanceOf(Array);
-    expect(response.body.length).toBeGreaterThanOrEqual(2);
+    expect(response.body).toBeInstanceOf(Object);
+    expect(response.body.items.length).toBeGreaterThanOrEqual(2);
   });
 
   it('Should return existing blog from MongoDB by id; GET /blogs/:id', async () => {
@@ -74,7 +77,7 @@ describe('Blogs API', () => {
   it('Should update correct blog from MongoDB by id; PUT /blogs/{id}', async () => {
     const createdBlog = await createBlog(app);
 
-    const blogUpdateData: BlogInputDto = {
+    const blogUpdateData: BlogCreateUpdateDto = {
       name: 'New name',
       description: 'New description',
       websiteUrl: 'https://new.org/',
@@ -95,7 +98,7 @@ describe('Blogs API', () => {
   });
 
   it('Should not update blog with unexisting id; PUT /blogs/{id}', async () => {
-    const blogUpdateData: BlogInputDto = {
+    const blogUpdateData: BlogCreateUpdateDto = {
       name: 'New name',
       description: 'New description',
       websiteUrl: 'https://new.org/',
@@ -131,5 +134,47 @@ describe('Blogs API', () => {
       .delete(`${BLOGS_PATH}/${nonExistingId}`)
       .set('Authorization', generateBasicAuthToken())
       .expect(HTTP_STATUSES.NOT_FOUND_404);
+  });
+
+  it('Should return all posts for specified blog from MongoDB; GET /blogs/{blogId}/posts', async () => {
+    const createdBlog1 = await createBlog(app);
+    const createdBlog2 = await createBlog(app);
+
+    await createPost(app, createdBlog1.id);
+    await createPost(app, createdBlog1.id);
+    await createPost(app, createdBlog2.id);
+
+    const response = await request(app)
+      .get(`${BLOGS_PATH}/${createdBlog1.id}/posts`)
+      .expect(HTTP_STATUSES.OK_200);
+
+    const response2 = await request(app)
+      .get(`${BLOGS_PATH}/${createdBlog2.id}/posts`)
+      .expect(HTTP_STATUSES.OK_200);
+
+    expect(response.body).toBeInstanceOf(Object);
+    expect(response.body.items.length).toBeGreaterThanOrEqual(2);
+
+    expect(response2.body).toBeInstanceOf(Object);
+    expect(response2.body.items.length).toEqual(1);
+  });
+
+  it('Should create new post for specified blog in MongoDB; POST /blogs/{blogId}/posts', async () => {
+    const createdBlog = await createBlog(app);
+
+    const testPostData: PostCreateUpdateDto = getPostInputDto(createdBlog.id);
+
+    await request(app)
+      .post(`${BLOGS_PATH}/${createdBlog.id}/posts`)
+      .set('Authorization', generateBasicAuthToken())
+      .send(testPostData)
+      .expect(HTTP_STATUSES.CREATED_201);
+
+    const response = await request(app)
+      .get(`${BLOGS_PATH}/${createdBlog.id}/posts`)
+      .expect(HTTP_STATUSES.OK_200);
+
+    expect(response.body).toBeInstanceOf(Object);
+    expect(response.body.items.length).toEqual(1);
   });
 });

@@ -1,6 +1,6 @@
-import { BlogInputDto } from '../../../src/blogs/dto/blog-input-dto';
+import { BlogCreateUpdateDto } from '../../../src/blogs/application/dtos/blog-create-update.dto';
 
-export function getBlogInputDto(): BlogInputDto {
+export function getBlogInputDto(): BlogCreateUpdateDto {
   return {
     name: 'JS NodeJs',
     description: 'Learn coding',

@@ -3,12 +3,12 @@ import request from 'supertest';
 import { generateBasicAuthToken } from '../generate-admin-auth-token';
 import { HTTP_STATUSES } from '../../../src/core/types/http-statuses';
 import { POSTS_PATH } from '../../../src/posts/constants/posts-paths';
-import { PostInputDto } from '../../../src/posts/dto/post-input-dto';
+import { PostCreateUpdateDto } from '../../../src/posts/application/dtos/post-create-update.dto';
 
 export const updatePost = async (
   app: Express,
   postId: string,
-  postUpdateDto?: PostInputDto,
+  postUpdateDto?: PostCreateUpdateDto,
 ): Promise<void> => {
   const response = await request(app)
     .put(`${POSTS_PATH}/${postId}`)

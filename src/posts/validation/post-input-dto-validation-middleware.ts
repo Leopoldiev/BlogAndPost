@@ -34,3 +34,9 @@ export const postInputDtoValidation = [
   contentValidation,
   blogIdValidation,
 ];
+
+export const postInputBlogIdValidation = [
+  titleValidation,
+  shortDescriptionValidation,
+  contentValidation,
+];
