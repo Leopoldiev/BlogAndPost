@@ -74,9 +74,9 @@ export const postsQueryRepository = {
     meta: { pageNumber: number; pageSize: number; totalCount: number },
   ): PaginatedViewModelOutput<PostViewModel> {
     return {
+      pagesCount: Math.ceil(meta.totalCount / meta.pageSize),
       page: meta.pageNumber,
       pageSize: meta.pageSize,
-      pagesCount: Math.ceil(meta.totalCount / meta.pageSize),
       totalCount: meta.totalCount,
       items: data.map(this.mapToPostViewModel),
     };

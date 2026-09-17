@@ -57,9 +57,9 @@ export const blogsQueryRepository = {
     meta: { pageNumber: number; pageSize: number; totalCount: number },
   ): PaginatedViewModelOutput<BlogViewModel> {
     return {
+      pagesCount: Math.ceil(meta.totalCount / meta.pageSize),
       page: meta.pageNumber,
       pageSize: meta.pageSize,
-      pagesCount: Math.ceil(meta.totalCount / meta.pageSize),
       totalCount: meta.totalCount,
       items: data.map(this.mapToBlogViewModel),
     };
