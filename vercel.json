@@ -1,16 +1,3 @@
 {
-  "version": 2,
-  "name": "Blogs-and-posts-vercel",
-  "builds": [
-    {
-      "src": "src/index.ts",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "src/index.ts"
-    }
-  ]
+  "version": 2
 }
