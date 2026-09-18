@@ -1,3 +1,3 @@
 export type BlogsSearchFields = {
-  searchBlogNameTerm?: string;
+  searchNameTerm?: string;
 };

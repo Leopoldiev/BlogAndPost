@@ -19,14 +19,14 @@ export const blogsQueryRepository = {
   async findMany(
     queryDto: BlogQueryInput,
   ): Promise<{ items: WithId<Blog>[]; totalCount: number }> {
-    const { pageNumber, pageSize, sortBy, sortDirection, searchBlogNameTerm } =
+    const { pageNumber, pageSize, sortBy, sortDirection, searchNameTerm } =
       queryDto;
 
     const skip = (pageNumber - 1) * pageSize;
     const filter: any = {};
 
-    if (searchBlogNameTerm) {
-      filter.name = { $regex: searchBlogNameTerm, $options: 'i' };
+    if (searchNameTerm) {
+      filter.name = { $regex: searchNameTerm, $options: 'i' };
     }
 
     const items = await blogCollection
