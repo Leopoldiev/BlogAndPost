@@ -1,6 +1,6 @@
 import { BlogCreateUpdateDto } from './dtos/blog-create-update.dto';
 import { mapBlogInputDtoToBlog } from '../routes/mappers/map-blog-input-dto-to-blog';
-import { blogsRepository } from '../repositories/blogs-repository';
+import { blogsRepository } from '../repositories/blogs.repository';
 import { Blog } from '../domain/blog';
 
 export const blogsService = {

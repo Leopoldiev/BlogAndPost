@@ -12,6 +12,8 @@ import { ObjectId } from 'mongodb';
 import { updatePost } from '../../utils/posts/update-post';
 import { PostCreateUpdateDto } from '../../../src/posts/application/dtos/post-create-update.dto';
 import dotenv from 'dotenv';
+import { createBlog } from '../../utils/blogs/create-blog';
+import { BLOGS_PATH } from '../../../src/blogs/constants/blogs-paths';
 
 dotenv.config();
 
@@ -30,6 +32,15 @@ describe('Posts API', () => {
 
   it('Should create correct post in MongoDB; POST /posts', async () => {
     await createPost(app);
+    await createPost(app);
+
+    const response = await request(app)
+      .get(POSTS_PATH)
+      .set('Authorization', generateBasicAuthToken())
+      .expect(HTTP_STATUSES.OK_200);
+
+    expect(response.body).toBeInstanceOf(Object);
+    expect(response.body.items.length).toBeGreaterThanOrEqual(2);
   });
 
   it('Should return all posts from MongoDB; GET /posts', async () => {

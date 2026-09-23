@@ -1,12 +1,12 @@
 import { PostCreateUpdateDto } from './dtos/post-create-update.dto';
 import { Post } from '../domain/post';
 import { mapPostInputDtoToPostDbModel } from '../routes/mappers/map-post-input-dto-to-post-db-model';
-import { postsRepository } from '../repositories/posts-repository';
+import { postsRepository } from '../repositories/posts.repository';
 import { blogsQueryRepository } from '../../blogs/repositories/blogs.query-repository';
 import { WithId } from 'mongodb';
 import { Blog } from '../../blogs/domain/blog';
 import { PostViewModel } from '../types/postViewModel';
-import { blogsRepository } from '../../blogs/repositories/blogs-repository';
+import { blogsRepository } from '../../blogs/repositories/blogs.repository';
 
 export const postsService = {
   async create(dto: PostCreateUpdateDto): Promise<string> {
