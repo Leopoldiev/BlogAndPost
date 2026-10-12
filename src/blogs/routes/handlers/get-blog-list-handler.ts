@@ -1,13 +1,13 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { BlogViewModel } from '../output/blog.view-model';
 import { HTTP_STATUSES } from '../../../core/types/http-statuses';
 import { BlogQueryInput } from '../input/blog-query.input';
 import { PaginatedViewModelOutput } from '../../../core/types/paginated-view-model.output';
-import { errorsHandler } from '../../../core/exceptions/errors.handler';
 import { blogsQueryRepository } from '../../repositories/blogs.query-repository';
+import { RequestWithQuery } from '../../../core/types/requests';
 
 export const getBlogListHandler = async (
-  req: Request<{}, {}, {}, BlogQueryInput>,
+  req: RequestWithQuery<BlogQueryInput>,
   res: Response<PaginatedViewModelOutput<BlogViewModel>>,
 ) => {
   try {
@@ -23,7 +23,7 @@ export const getBlogListHandler = async (
     });
 
     res.status(HTTP_STATUSES.OK_200).send(blogList);
-  } catch (e: unknown) {
-    errorsHandler(e, res);
+  } catch {
+    res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500);
   }
 };

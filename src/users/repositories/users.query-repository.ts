@@ -5,6 +5,7 @@ import { User } from '../domain/user';
 import { PaginatedViewModelOutput } from '../../core/types/paginated-view-model.output';
 import { UserViewModel } from '../routes/output/user.view-model';
 import { NotFoundException } from '../../core/exceptions/not-found.exception';
+import { MeViewModel } from '../../auth/routes/output/me.view-model';
 
 export const usersQueryRepository = {
   async findByIdOrFail(id: string): Promise<WithId<User>> {
@@ -61,12 +62,21 @@ export const usersQueryRepository = {
 
     return { items, totalCount };
   },
+
   mapToUserViewModel(user: WithId<User>): UserViewModel {
     return {
       id: user._id.toString(),
       login: user.login,
       email: user.email,
       createdAt: user.createdAt,
+    };
+  },
+
+  mapToMeViewModel(user: WithId<User>): MeViewModel {
+    return {
+      email: user.email,
+      login: user.login,
+      userId: user._id.toString(),
     };
   },
 

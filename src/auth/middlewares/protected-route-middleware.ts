@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { HTTP_STATUSES } from '../../core/types/http-statuses';
+import { appConfig } from '../../core/config/config';
 
 export const protectedRouteMiddleware = (
   req: Request,
@@ -16,7 +17,7 @@ export const protectedRouteMiddleware = (
   const authorizationKey =
     'Basic ' +
     Buffer.from(
-      `${process.env.ADMIN_USERNAME}:${process.env.ADMIN_PASSWORD}`,
+      `${appConfig.ADMIN_USERNAME}:${appConfig.ADMIN_PASSWORD}`,
     ).toString('base64');
 
   if (auth !== authorizationKey) {

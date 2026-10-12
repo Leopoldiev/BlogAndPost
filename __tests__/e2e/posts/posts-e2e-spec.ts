@@ -12,8 +12,7 @@ import { ObjectId } from 'mongodb';
 import { updatePost } from '../../utils/posts/update-post';
 import { PostCreateUpdateDto } from '../../../src/posts/application/dtos/post-create-update.dto';
 import dotenv from 'dotenv';
-import { createBlog } from '../../utils/blogs/create-blog';
-import { BLOGS_PATH } from '../../../src/blogs/constants/blogs-paths';
+import { appConfig } from '../../../src/core/config/config';
 
 dotenv.config();
 
@@ -22,7 +21,7 @@ describe('Posts API', () => {
   setupApp(app);
 
   beforeAll(async () => {
-    await runDB(process.env.MONGO_URL || 'mongodb://localhost:27017');
+    await runDB(appConfig.MONGO_URL || 'mongodb://localhost:27017');
     await clearDB(app);
   });
 

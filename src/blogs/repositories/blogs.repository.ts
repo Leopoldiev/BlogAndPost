@@ -1,17 +1,24 @@
 import { blogCollection } from '../../db/collections';
-import { ObjectId, WithId } from 'mongodb';
+import { DeleteResult, ObjectId, UpdateResult, WithId } from 'mongodb';
 import { BlogCreateUpdateDto } from '../application/dtos/blog-create-update.dto';
 import { Blog } from '../domain/blog';
-import { NotFoundException } from '../../core/exceptions/not-found.exception';
+import { BlogViewModel } from '../routes/output/blog.view-model';
 
 export const blogsRepository = {
+  async findById(id: string): Promise<WithId<Blog> | null> {
+    return await blogCollection.findOne({ _id: new ObjectId(id) });
+  },
+
   async create(newBlog: Blog): Promise<string> {
     const insertResult = await blogCollection.insertOne(newBlog);
     return insertResult.insertedId.toString();
   },
 
-  async update(id: string, dto: BlogCreateUpdateDto): Promise<void> {
-    const updateResult = await blogCollection.updateOne(
+  async update(
+    id: string,
+    dto: BlogCreateUpdateDto,
+  ): Promise<UpdateResult<Blog>> {
+    return await blogCollection.updateOne(
       { _id: new ObjectId(id) },
       {
         $set: {
@@ -21,31 +28,22 @@ export const blogsRepository = {
         },
       },
     );
-
-    if (updateResult.matchedCount < 1) {
-      throw new NotFoundException('Blog not exist');
-    }
-
-    return;
   },
 
-  async delete(id: string): Promise<void> {
-    const deleteResult = await blogCollection.deleteOne({
+  async delete(id: string): Promise<DeleteResult> {
+    return await blogCollection.deleteOne({
       _id: new ObjectId(id),
     });
-
-    if (deleteResult.deletedCount < 1) {
-      throw new NotFoundException('Blog not exist');
-    }
-    return;
   },
 
-  async findByIdOrFail(id: string): Promise<WithId<Blog>> {
-    const blog = await blogCollection.findOne({ _id: new ObjectId(id) });
-
-    if (!blog) {
-      throw new NotFoundException(`Blog with id ${id} not found`);
-    }
-    return blog;
+  mapToBlogViewModel(blog: WithId<Blog>): BlogViewModel {
+    return {
+      id: blog._id.toString(),
+      name: blog.name,
+      description: blog.description,
+      websiteUrl: blog.websiteUrl,
+      createdAt: blog.createdAt,
+      isMembership: blog.isMembership,
+    };
   },
 };

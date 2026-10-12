@@ -1,19 +1,30 @@
 import { ObjectId, WithId } from 'mongodb';
 import { postCollection } from '../../db/collections';
-import { NotFoundException } from '../../core/exceptions/not-found.exception';
 import { Post } from '../domain/post';
 import { PostQueryInput } from '../input/post-query.input';
 import { PostViewModel } from '../types/postViewModel';
 import { PaginatedViewModelOutput } from '../../core/types/paginated-view-model.output';
+import { ResultStatus } from '../../core/result/resultCode';
+import { Result } from '../../core/result/result.type';
 
 export const postsQueryRepository = {
-  async findByIdOrFail(id: string): Promise<WithId<Post>> {
+  async findById(id: string): Promise<Result<Post | null>> {
     const post = await postCollection.findOne({ _id: new ObjectId(id) });
 
     if (!post) {
-      throw new NotFoundException(`Post with id ${id} not found`);
+      return {
+        status: ResultStatus.NotFound_404,
+        errorMessage: 'Not Found',
+        extensions: [{ field: 'id', message: 'Wrong comment id' }],
+        data: null,
+      };
     }
-    return post;
+
+    return {
+      status: ResultStatus.Success,
+      data: this.mapToPostViewModel(post),
+      extensions: [],
+    };
   },
 
   async findMany(

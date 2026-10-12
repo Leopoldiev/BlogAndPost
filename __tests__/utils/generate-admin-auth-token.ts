@@ -1,8 +1,10 @@
+import { appConfig } from '../../src/core/config/config';
+
 export const generateBasicAuthToken = () => {
   const authorizationKey =
     'Basic ' +
     Buffer.from(
-      `${process.env.ADMIN_USERNAME}:${process.env.ADMIN_PASSWORD}`,
+      `${appConfig.ADMIN_USERNAME}:${appConfig.ADMIN_PASSWORD}`,
     ).toString('base64');
 
   return authorizationKey;

@@ -15,7 +15,8 @@ import { sanitizeQueryParams } from '../../core/middlewares/validation/sanitize-
 import { PostSortFields } from '../../posts/input/post-sort-fields';
 import { getPostListForBlogHandler } from '../../posts/routes/handlers/get-post-list-for-blog-handler';
 import { postInputBlogIdValidation } from '../../posts/validation/post-input-dto-validation-middleware';
-import { createPostByBlogId } from '../../posts/routes/handlers/create-post-by-blog-id-handler';
+import { createPostByBlogIdHandler } from '../../posts/routes/handlers/create-post-by-blog-id-handler';
+import { POSTS_PATH } from '../../posts/constants/posts-paths';
 
 export const blogsRouter = Router({});
 
@@ -35,7 +36,7 @@ blogsRouter.get(
 );
 
 blogsRouter.get(
-  `${BLOGS_ROUTES.BY_ID}/posts`,
+  `${BLOGS_ROUTES.BY_ID}${POSTS_PATH}`,
   paginationAndSortingValidation(PostSortFields),
   validationResultMiddleware,
   sanitizeQueryParams,
@@ -51,11 +52,11 @@ blogsRouter.post(
 );
 
 blogsRouter.post(
-  `${BLOGS_ROUTES.BY_ID}/posts`,
+  `${BLOGS_ROUTES.BY_ID}${POSTS_PATH}`,
   protectedRouteMiddleware,
   postInputBlogIdValidation,
   validationResultMiddleware,
-  createPostByBlogId,
+  createPostByBlogIdHandler,
 );
 
 blogsRouter.put(

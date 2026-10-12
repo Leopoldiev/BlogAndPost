@@ -1,23 +1,22 @@
 import { userCollection } from '../../db/collections';
 import { User } from '../domain/user';
-import { ObjectId, WithId } from 'mongodb';
-import { NotFoundException } from '../../core/exceptions/not-found.exception';
+import { DeleteResult, ObjectId, WithId } from 'mongodb';
+import { UserViewModel } from '../routes/output/user.view-model';
 
 export const usersRepository = {
+  async findById(id: string): Promise<WithId<User> | null> {
+    return await userCollection.findOne({ _id: new ObjectId(id) });
+  },
+
   async create(newUser: User): Promise<string> {
     const insertResult = await userCollection.insertOne(newUser);
     return insertResult.insertedId.toString();
   },
 
-  async delete(id: string): Promise<void> {
-    const deleteResult = await userCollection.deleteOne({
+  async delete(id: string): Promise<DeleteResult> {
+    return await userCollection.deleteOne({
       _id: new ObjectId(id),
     });
-
-    if (deleteResult.deletedCount < 1) {
-      throw new NotFoundException('User not exist');
-    }
-    return;
   },
 
   async findByLoginOrEmail(loginOrEmail: {
@@ -27,5 +26,14 @@ export const usersRepository = {
     return await userCollection.findOne({
       $or: [{ email: loginOrEmail.email }, { login: loginOrEmail.login }],
     });
+  },
+
+  mapToUserViewModel(user: WithId<User>): UserViewModel {
+    return {
+      id: user._id.toString(),
+      login: user.login,
+      email: user.email,
+      createdAt: user.createdAt,
+    };
   },
 };

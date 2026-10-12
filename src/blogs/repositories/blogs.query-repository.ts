@@ -1,19 +1,30 @@
 import { ObjectId, WithId } from 'mongodb';
 import { Blog } from '../domain/blog';
 import { blogCollection } from '../../db/collections';
-import { NotFoundException } from '../../core/exceptions/not-found.exception';
 import { BlogQueryInput } from '../routes/input/blog-query.input';
 import { BlogViewModel } from '../routes/output/blog.view-model';
 import { PaginatedViewModelOutput } from '../../core/types/paginated-view-model.output';
+import { ResultStatus } from '../../core/result/resultCode';
+import { Result } from '../../core/result/result.type';
 
 export const blogsQueryRepository = {
-  async findByIdOrFail(id: string): Promise<WithId<Blog>> {
+  async findById(id: string): Promise<Result<Blog | null>> {
     const blog = await blogCollection.findOne({ _id: new ObjectId(id) });
 
     if (!blog) {
-      throw new NotFoundException(`Blog with id ${id} not found`);
+      return {
+        status: ResultStatus.NotFound_404,
+        errorMessage: 'Not Found',
+        extensions: [{ field: 'id', message: 'Wrong blog id' }],
+        data: null,
+      };
     }
-    return blog;
+
+    return {
+      status: ResultStatus.Success,
+      data: this.mapToBlogViewModel(blog),
+      extensions: [],
+    };
   },
 
   async findMany(

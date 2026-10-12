@@ -1,8 +1,7 @@
-import { ObjectId, WithId } from 'mongodb';
+import { DeleteResult, ObjectId, UpdateResult, WithId } from 'mongodb';
 import { postCollection } from '../../db/collections';
 import { Post } from '../domain/post';
 import { PostCreateUpdateDto } from '../application/dtos/post-create-update.dto';
-import { NotFoundException } from '../../core/exceptions/not-found.exception';
 import { PostViewModel } from '../types/postViewModel';
 
 export const postsRepository = {
@@ -11,8 +10,11 @@ export const postsRepository = {
     return insertResult.insertedId.toString();
   },
 
-  async update(id: string, dto: PostCreateUpdateDto): Promise<void> {
-    const updateResult = await postCollection.updateOne(
+  async update(
+    id: string,
+    dto: PostCreateUpdateDto,
+  ): Promise<UpdateResult<Post>> {
+    return await postCollection.updateOne(
       { _id: new ObjectId(id) },
       {
         $set: {
@@ -23,32 +25,16 @@ export const postsRepository = {
         },
       },
     );
-
-    if (updateResult.matchedCount < 1) {
-      throw new NotFoundException('Post not exist');
-    }
-
-    return;
   },
 
-  async delete(id: string) {
-    const deleteResult = await postCollection.deleteOne({
+  async delete(id: string): Promise<DeleteResult> {
+    return postCollection.deleteOne({
       _id: new ObjectId(id),
     });
-
-    if (deleteResult.deletedCount < 1) {
-      throw new NotFoundException('Post not exist');
-    }
-    return;
   },
 
-  async findByIdOrFail(id: string): Promise<WithId<Post>> {
-    const post = await postCollection.findOne({ _id: new ObjectId(id) });
-
-    if (!post) {
-      throw new NotFoundException(`Post with id ${id} not found`);
-    }
-    return post;
+  async findById(id: string): Promise<WithId<Post> | null> {
+    return await postCollection.findOne({ _id: new ObjectId(id) });
   },
 
   mapToPostViewModel(post: WithId<Post>): PostViewModel {

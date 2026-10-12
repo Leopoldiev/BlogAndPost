@@ -1,17 +1,22 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { HTTP_STATUSES } from '../../../core/types/http-statuses';
-import { errorsHandler } from '../../../core/exceptions/errors.handler';
 import { usersService } from '../../application/users.service';
+import { RequestWithParams } from '../../../core/types/requests';
+import { ResultStatus } from '../../../core/result/resultCode';
+import { resultCodeToHttpException } from '../../../core/result/resultCodeToHttpException';
 
 export const deleteUserHandler = async (
-  req: Request<{ id: string }>,
+  req: RequestWithParams<{ id: string }>,
   res: Response,
 ) => {
-  try {
-    const id = req.params.id;
-    await usersService.delete(id);
-    res.sendStatus(HTTP_STATUSES.NO_CONTENT_204);
-  } catch (e: unknown) {
-    errorsHandler(e, res);
+  const id = req.params.id;
+  const result = await usersService.delete(id);
+
+  if (result.status !== ResultStatus.Success) {
+    return res
+      .status(resultCodeToHttpException(result.status))
+      .send(result.extensions);
   }
+
+  res.sendStatus(HTTP_STATUSES.NO_CONTENT_204);
 };

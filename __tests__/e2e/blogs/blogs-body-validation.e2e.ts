@@ -10,6 +10,7 @@ import { HTTP_STATUSES } from '../../../src/core/types/http-statuses';
 import { generateBasicAuthToken } from '../../utils/generate-admin-auth-token';
 import { createBlog } from '../../utils/blogs/create-blog';
 import { BlogCreateUpdateDto } from '../../../src/blogs/application/dtos/blog-create-update.dto';
+import { appConfig } from '../../../src/core/config/config';
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ describe('Blogs API', () => {
   const correctTestBlogInputData: BlogCreateUpdateDto = getBlogInputDto();
 
   beforeAll(async () => {
-    await runDB(process.env.MONGO_URL || 'mongodb://localhost:27017');
+    await runDB(appConfig.MONGO_URL || 'mongodb://localhost:27017');
     await clearDB(app);
   });
 

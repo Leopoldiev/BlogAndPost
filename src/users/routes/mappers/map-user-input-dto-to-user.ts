@@ -1,9 +1,6 @@
 import { UserCreateDto } from '../../application/dtos/user-create.dto';
-import { User } from '../../domain/user';
 
-export const mapUserInputDtoToUser = (
-  dto: UserCreateDto,
-): Omit<User, 'createdAt'> => {
+export const mapUserInputDtoToUser = (dto: UserCreateDto): UserCreateDto => {
   return {
     login: dto.login,
     password: dto.password,

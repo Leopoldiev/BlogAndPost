@@ -1,19 +1,22 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { HTTP_STATUSES } from '../../../core/types/http-statuses';
-import { PostViewModel } from '../../types/postViewModel';
-import { errorsHandler } from '../../../core/exceptions/errors.handler';
 import { postsQueryRepository } from '../../repositories/posts.query-repository';
+import { RequestWithParams } from '../../../core/types/requests';
+import { ResultStatus } from '../../../core/result/resultCode';
+import { resultCodeToHttpException } from '../../../core/result/resultCodeToHttpException';
 
 export const getPostHandler = async (
-  req: Request<{ id: string }>,
-  res: Response<PostViewModel>,
+  req: RequestWithParams<{ id: string }>,
+  res: Response,
 ) => {
-  try {
-    const id = req.params.id;
-    const foundedPost = await postsQueryRepository.findByIdOrFail(id);
-    const post = postsQueryRepository.mapToPostViewModel(foundedPost);
-    res.status(HTTP_STATUSES.OK_200).send(post);
-  } catch (e: unknown) {
-    errorsHandler(e, res);
+  const id = req.params.id;
+  const result = await postsQueryRepository.findById(id);
+
+  if (result.status !== ResultStatus.Success) {
+    return res
+      .status(resultCodeToHttpException(result.status))
+      .send(result.extensions);
   }
+
+  res.status(HTTP_STATUSES.OK_200).send(result.data);
 };

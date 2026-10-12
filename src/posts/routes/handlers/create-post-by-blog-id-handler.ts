@@ -1,21 +1,28 @@
-import { Request, Response } from 'express';
-import { PostViewModel } from '../../types/postViewModel';
+import { Response } from 'express';
 import { HTTP_STATUSES } from '../../../core/types/http-statuses';
 import { PostCreateUpdateDto } from '../../application/dtos/post-create-update.dto';
-import { errorsHandler } from '../../../core/exceptions/errors.handler';
 import { postsService } from '../../application/posts.service';
+import { RequestWithParamsAndBody } from '../../../core/types/requests';
+import { ResultStatus } from '../../../core/result/resultCode';
+import { resultCodeToHttpException } from '../../../core/result/resultCodeToHttpException';
 
-export const createPostByBlogId = async (
-  req: Request<{ id: string }, {}, Omit<PostCreateUpdateDto, 'blogId'>>,
-  res: Response<PostViewModel>,
+export const createPostByBlogIdHandler = async (
+  req: RequestWithParamsAndBody<
+    { id: string },
+    Omit<PostCreateUpdateDto, 'blogId'>
+  >,
+  res: Response,
 ) => {
-  try {
-    const inputDto = req.body;
-    const id = req.params.id;
+  const inputDto = req.body;
+  const id = req.params.id;
 
-    const postList = await postsService.createPostByBlogId(id, inputDto);
-    res.status(HTTP_STATUSES.CREATED_201).send(postList);
-  } catch (e: unknown) {
-    errorsHandler(e, res);
+  const result = await postsService.createPostByBlogId(id, inputDto);
+
+  if (result.status !== ResultStatus.Success) {
+    return res
+      .status(resultCodeToHttpException(result.status))
+      .send(result.extensions);
   }
+
+  res.status(HTTP_STATUSES.CREATED_201).send(result.data);
 };

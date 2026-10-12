@@ -9,6 +9,7 @@ import { generateBasicAuthToken } from '../../utils/generate-admin-auth-token';
 import { UserCreateDto } from '../../../src/users/application/dtos/user-create.dto';
 import { getUserInputDto } from '../../utils/users/get-user-input-dto';
 import { USERS_PATH } from '../../../src/users/constants/users-paths';
+import { appConfig } from '../../../src/core/config/config';
 
 dotenv.config();
 
@@ -19,7 +20,7 @@ describe('Users API', () => {
   const correctTestUserInputData: UserCreateDto = getUserInputDto();
 
   beforeAll(async () => {
-    await runDB(process.env.MONGO_URL || 'mongodb://localhost:27017');
+    await runDB(appConfig.MONGO_URL || 'mongodb://localhost:27017');
     await clearDB(app);
   });
 

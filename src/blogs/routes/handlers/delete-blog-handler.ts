@@ -1,17 +1,23 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { HTTP_STATUSES } from '../../../core/types/http-statuses';
 import { blogsService } from '../../application/blogs.service';
-import { errorsHandler } from '../../../core/exceptions/errors.handler';
+import { RequestWithParams } from '../../../core/types/requests';
+import { ResultStatus } from '../../../core/result/resultCode';
+import { resultCodeToHttpException } from '../../../core/result/resultCodeToHttpException';
 
 export const deleteBlogHandler = async (
-  req: Request<{ id: string }>,
+  req: RequestWithParams<{ id: string }>,
   res: Response,
 ) => {
-  try {
-    const id = req.params.id;
-    await blogsService.delete(id);
-    res.sendStatus(HTTP_STATUSES.NO_CONTENT_204);
-  } catch (e: unknown) {
-    errorsHandler(e, res);
+  const id = req.params.id;
+
+  const result = await blogsService.delete(id);
+
+  if (result.status !== ResultStatus.Success) {
+    return res
+      .status(resultCodeToHttpException(result.status))
+      .send(result.extensions);
   }
+
+  res.sendStatus(HTTP_STATUSES.NO_CONTENT_204);
 };

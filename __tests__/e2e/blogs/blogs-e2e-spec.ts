@@ -15,6 +15,7 @@ import { createPost } from '../../utils/posts/create-post';
 import { PostCreateUpdateDto } from '../../../src/posts/application/dtos/post-create-update.dto';
 import { getPostInputDto } from '../../utils/posts/get-post-input-dto';
 import dotenv from 'dotenv';
+import { appConfig } from '../../../src/core/config/config';
 
 dotenv.config();
 
@@ -23,7 +24,7 @@ describe('Blogs API', () => {
   setupApp(app);
 
   beforeAll(async () => {
-    await runDB(process.env.MONGO_URL || 'mongodb://localhost:27017');
+    await runDB(appConfig.MONGO_URL || 'mongodb://localhost:27017');
     await clearDB(app);
   });
 

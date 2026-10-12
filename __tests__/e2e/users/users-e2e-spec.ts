@@ -11,6 +11,7 @@ import { createUser } from '../../utils/users/create-user';
 import { USERS_PATH } from '../../../src/users/constants/users-paths';
 import { UserCreateDto } from '../../../src/users/application/dtos/user-create.dto';
 import { getUserInputDto } from '../../utils/users/get-user-input-dto';
+import { appConfig } from '../../../src/core/config/config';
 
 dotenv.config();
 
@@ -19,7 +20,7 @@ describe('Users API', () => {
   setupApp(app);
 
   beforeAll(async () => {
-    await runDB(process.env.MONGO_URL || 'mongodb://localhost:27017');
+    await runDB(appConfig.MONGO_URL || 'mongodb://localhost:27017');
     await clearDB(app);
   });
 

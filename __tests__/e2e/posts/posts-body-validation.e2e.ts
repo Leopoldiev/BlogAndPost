@@ -10,6 +10,7 @@ import { createBlog } from '../../utils/blogs/create-blog';
 import { getPostInputDto } from '../../utils/posts/get-post-input-dto';
 import { POSTS_PATH } from '../../../src/posts/constants/posts-paths';
 import { createPost } from '../../utils/posts/create-post';
+import { appConfig } from '../../../src/core/config/config';
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ describe('Posts API', () => {
   let correctTestPostInputData = {};
 
   beforeAll(async () => {
-    await runDB(process.env.MONGO_URL || 'mongodb://localhost:27017');
+    await runDB(appConfig.MONGO_URL || 'mongodb://localhost:27017');
     await clearDB(app);
 
     const createdBlog = await createBlog(app);

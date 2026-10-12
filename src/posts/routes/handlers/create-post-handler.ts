@@ -1,22 +1,22 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { HTTP_STATUSES } from '../../../core/types/http-statuses';
 import { PostCreateUpdateDto } from '../../application/dtos/post-create-update.dto';
-import { PostViewModel } from '../../types/postViewModel';
 import { postsService } from '../../application/posts.service';
-import { errorsHandler } from '../../../core/exceptions/errors.handler';
-import { postsQueryRepository } from '../../repositories/posts.query-repository';
+import { RequestWithBody } from '../../../core/types/requests';
+import { ResultStatus } from '../../../core/result/resultCode';
+import { resultCodeToHttpException } from '../../../core/result/resultCodeToHttpException';
 
 export const createPostHandler = async (
-  req: Request<{}, {}, PostCreateUpdateDto>,
-  res: Response<PostViewModel>,
+  req: RequestWithBody<PostCreateUpdateDto>,
+  res: Response,
 ) => {
-  try {
-    const createdPostId = await postsService.create(req.body);
-    const foundedPost =
-      await postsQueryRepository.findByIdOrFail(createdPostId);
-    const createdPost = postsQueryRepository.mapToPostViewModel(foundedPost);
-    res.status(HTTP_STATUSES.CREATED_201).send(createdPost);
-  } catch (e: unknown) {
-    errorsHandler(e, res);
+  const result = await postsService.create(req.body);
+
+  if (result.status !== ResultStatus.Success) {
+    return res
+      .status(resultCodeToHttpException(result.status))
+      .send(result.extensions);
   }
+
+  res.status(HTTP_STATUSES.CREATED_201).send(result.data);
 };

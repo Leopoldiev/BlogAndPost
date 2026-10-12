@@ -1,13 +1,13 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { HTTP_STATUSES } from '../../../core/types/http-statuses';
 import { PostViewModel } from '../../types/postViewModel';
 import { PostQueryInput } from '../../input/post-query.input';
 import { PaginatedViewModelOutput } from '../../../core/types/paginated-view-model.output';
-import { errorsHandler } from '../../../core/exceptions/errors.handler';
 import { postsQueryRepository } from '../../repositories/posts.query-repository';
+import { RequestWithQuery } from '../../../core/types/requests';
 
 export const getPostListHandler = async (
-  req: Request<{}, {}, {}, PostQueryInput>,
+  req: RequestWithQuery<PostQueryInput>,
   res: Response<PaginatedViewModelOutput<PostViewModel>>,
 ) => {
   try {
@@ -20,7 +20,7 @@ export const getPostListHandler = async (
       totalCount,
     });
     res.status(HTTP_STATUSES.OK_200).send(postList);
-  } catch (e: unknown) {
-    errorsHandler(e, res);
+  } catch {
+    res.sendStatus(HTTP_STATUSES.INTERNAL_SERVER_ERROR_500);
   }
 };
