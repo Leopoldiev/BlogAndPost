@@ -10,4 +10,6 @@ export const appConfig = {
   DB_NAME: process.env.DB_NAME,
   ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET || 'OpenSAML',
   ACCESS_TOKEN_EXP_TIME: Number(process.env.ACCESS_TOKEN_EXP_TIME) || 900,
+  EMAIL: process.env.EMAIL as string,
+  EMAIL_PASSWORD: process.env.EMAIL_PASSWORD as string,
 };

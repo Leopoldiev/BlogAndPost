@@ -1,6 +1,5 @@
 import { UserCreateDto } from './dtos/user-create.dto';
 import { User } from '../domain/user';
-import { mapUserInputDtoToUser } from '../routes/mappers/map-user-input-dto-to-user';
 import { usersRepository } from '../repositories/users.repository';
 import { bcryptService } from '../../auth/application/bcrypt.service';
 import { ResultStatus } from '../../core/result/resultCode';
@@ -9,9 +8,10 @@ import { UserViewModel } from '../routes/output/user.view-model';
 
 export const usersService = {
   async create(dto: UserCreateDto): Promise<Result<UserViewModel | null>> {
+    const { login, password, email } = dto;
     const userExists = await usersRepository.findByLoginOrEmail({
-      login: dto.login,
-      email: dto.email,
+      login: login,
+      email: email,
     });
 
     if (userExists) {
@@ -26,12 +26,18 @@ export const usersService = {
     }
 
     const createdDate = new Date();
-    const passwordHash = await bcryptService.generateHash(dto.password);
+    const passwordHash = await bcryptService.generateHash(password);
 
     const newUser: User = {
-      ...mapUserInputDtoToUser(dto),
+      login,
+      email,
       passwordHash: passwordHash,
-      createdAt: createdDate.toISOString(),
+      createdAt: createdDate,
+      emailConfirmation: {
+        confirmationCode: '',
+        isConfirmed: true,
+        expirationDate: new Date(),
+      },
     };
 
     const userId = await usersRepository.create(newUser);

@@ -2,7 +2,6 @@ import { Collection, Db } from 'mongodb';
 import { Blog } from '../blogs/domain/blog';
 import { Post } from '../posts/domain/post';
 import { User } from '../users/domain/user';
-import { Comment } from '../comments/domain/comment';
 import { CommentDBModel } from '../comments/types/commentDBModel';
 
 export const BLOG_COLLECTION_NAME = 'blogs';

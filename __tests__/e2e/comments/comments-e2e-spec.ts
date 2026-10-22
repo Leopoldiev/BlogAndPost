@@ -158,4 +158,20 @@ describe('Comments API', () => {
       .set({ Authorization: `Bearer ${token2}` })
       .expect(HTTP_STATUSES.FORBIDDEN_403);
   });
+
+  it('Should not delete comment by id with unexisting commentId MongoDB; DELETE /comments/{id}', async () => {
+    const createdBlog = await createBlog(app);
+    const createdPost = await createPost(app, createdBlog.id);
+    await createUser(app);
+
+    const token = await generateJwtAuthToken(app);
+    const nonExistentCommentId = new ObjectId().toString();
+
+    const comment = await createComment(app, createdPost.id.toString(), token);
+
+    await request(app)
+      .delete(`${COMMENTS_PATH}/${nonExistentCommentId}`)
+      .set({ Authorization: `Bearer ${token}` })
+      .expect(HTTP_STATUSES.NOT_FOUND_404);
+  });
 });

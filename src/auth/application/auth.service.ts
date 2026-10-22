@@ -6,6 +6,11 @@ import { WithId } from 'mongodb';
 import { User } from '../../users/domain/user';
 import { ResultStatus } from '../../core/result/resultCode';
 import { jwtService } from './jwt.service';
+import { nodemailerService } from './nodemailer.service';
+import { emailExamples } from './emailExamples';
+import { UserRegistrationDto } from './dtos/user-registration.dto';
+import { randomUUID } from 'crypto';
+import { add } from 'date-fns';
 
 export const authUserService = {
   async login(
@@ -56,6 +61,7 @@ export const authUserService = {
       password,
       user.passwordHash,
     );
+
     if (!isPassCorrect)
       return {
         status: ResultStatus.BadRequest_400,
@@ -67,6 +73,108 @@ export const authUserService = {
     return {
       status: ResultStatus.Success,
       data: user,
+      extensions: [],
+    };
+  },
+  async registration(dto: UserRegistrationDto): Promise<Result> {
+    const { login, email, password } = dto;
+    const user = await usersRepository.doesExistByLoginOrEmail(login, email);
+    if (user)
+      return {
+        status: ResultStatus.BadRequest_400,
+        errorMessage: 'Bad Request',
+        data: null,
+        extensions: [{ field: 'loginOrEmail', message: 'Already Registered' }],
+      };
+
+    const passwordHash = await bcryptService.generateHash(password);
+
+    const newUser = new User(login, email, passwordHash);
+
+    await usersRepository.create(newUser);
+
+    nodemailerService
+      .sendEmail(
+        newUser.email,
+        newUser.emailConfirmation.confirmationCode,
+        emailExamples.registrationEmail,
+      )
+      .catch((err) => console.error('error in send email:', err));
+    return {
+      status: ResultStatus.Success,
+      data: null,
+      extensions: [],
+    };
+  },
+
+  async registrationConfirmation(code: string): Promise<Result> {
+    const user = await usersRepository.findByCode(code);
+
+    if (
+      !user ||
+      user.emailConfirmation.confirmationCode !== code ||
+      user.emailConfirmation.expirationDate < new Date() ||
+      user.emailConfirmation.isConfirmed
+    ) {
+      return {
+        status: ResultStatus.BadRequest_400,
+        errorMessage: 'Bad Request',
+        data: null,
+        extensions: [
+          {
+            field: 'confirmationCode',
+            message: 'confirmationCode is incorrect',
+          },
+        ],
+      };
+    }
+
+    await usersRepository.updateConfirmationCodeStatus(user._id);
+
+    return {
+      status: ResultStatus.Success,
+      data: null,
+      extensions: [],
+    };
+  },
+
+  async registrationEmailResending(email: string): Promise<Result> {
+    const user = await usersRepository.findByLoginOrEmail({ email: email });
+
+    if (!user || user.emailConfirmation.isConfirmed) {
+      return {
+        status: ResultStatus.BadRequest_400,
+        errorMessage: 'Bad Request',
+        data: null,
+        extensions: [
+          {
+            field: 'emailConfirmation',
+            message: 'emailConfirmation failed',
+          },
+        ],
+      };
+    }
+
+    const newCode = randomUUID();
+    const newExpDate = add(new Date(), { hours: 1, minutes: 30 });
+
+    const isUpdated = await usersRepository.updateConfirmationCode(
+      user._id,
+      newCode,
+      newExpDate,
+    );
+
+    if (!isUpdated) {
+      console.error('error in resend email:');
+    }
+
+    nodemailerService
+      .sendEmail(email, newCode, emailExamples.registrationEmail)
+      .catch((err) => console.error('error in send email:', err));
+
+    return {
+      status: ResultStatus.Success,
+      data: null,
       extensions: [],
     };
   },
